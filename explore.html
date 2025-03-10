@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explore More - eGovFix</title>
+    <style>
+        /* General Styling */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            background-color: #f4f4f4;
+        }
+        header {
+            background-color: #007bff;
+            color: white;
+            padding: 20px;
+            animation: fadeIn 1.5s ease-in-out;
+        }
+
+        /* Hero Section */
+        .hero {
+            background-color: #e9ecef;
+            padding: 50px 20px;
+            animation: slideUp 1.2s ease-in-out;
+        }
+
+        /* Features Section */
+        .features {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            padding: 40px 20px;
+        }
+        .feature {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .feature:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* CTA Section */
+        .cta {
+            background-color: #007bff;
+            color: white;
+            padding: 40px;
+            animation: fadeIn 1.5s ease-in-out;
+        }
+        button {
+            background: white;
+            color: #007bff;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s, color 0.3s;
+        }
+        button:hover {
+            background: #0056b3;
+            color: white;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .features {
+                flex-direction: column;
+                align-items: center;
+            }
+            .feature {
+                width: 90%;
+            }
+            button {
+                font-size: 14px;
+                padding: 8px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>eGovFix: Simplifying Government Document Management</h1>
+        <p>Your one-stop solution for updating and managing official documents hassle-free.</p>
+    </header>
+    
+    <section class="hero">
+        <h2>Why Choose eGovFix?</h2>
+        <p>Streamline corrections and updates for Aadhaar, PAN, driving licenses, and more from a single platform.</p>
+    </section>
+    
+    <section class="features">
+        <div class="feature">
+            <h3>Easy Document Updates</h3>
+            <p>Update your government documents without visiting multiple offices.</p>
+        </div>
+        <div class="feature">
+            <h3>Secure & Reliable</h3>
+            <p>Ensuring data security and privacy while processing your requests.</p>
+        </div>
+        <div class="feature">
+            <h3>Fast Processing</h3>
+            <p>Get your documents updated quickly with minimal effort.</p>
+        </div>
+    </section>
+    
+    <section class="cta">
+        <h2>Get Started with eGovFix</h2>
+        <p>Experience a hassle-free way to update and manage your government documents.</p>
+        <button onclick="window.location.href='landing.html'">Explore Now</button>
+    </section>
+</body>
+</html>
