@@ -37,7 +37,7 @@
                     </div>
                     <div class="input-field">
                         <i class="fas fa-calendar"></i>
-                        <input type="date" id="signup-date" required />
+                        <input type="date" id="signup-date" required /> 
                     </div>
                     <div class="input-field">
                         <i class="fas fa-id-card"></i>
@@ -83,6 +83,110 @@
     </div>
 
     <script src="app.js"></script>
+    <script>
+        // Get user type from URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const userType = urlParams.get('type');
+
+        // Function to handle successful login
+        function handleLoginSuccess(data) {
+            // Store user type in session storage
+            sessionStorage.setItem('userType', data.userType);
+            sessionStorage.setItem('username', data.username);
+            
+            // Redirect based on user type
+            window.location.href = data.redirect;
+        }
+
+        // Add event listeners to forms
+        document.getElementById('sign-in-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // For guest users, directly redirect without requiring credentials
+            if (userType === 'guest') {
+                handleLoginSuccess({ userType: 'guest', redirect: 'guestDashboard.html' });
+                return;
+            }
+
+            const username = document.getElementById('signin-username').value;
+            const password = document.getElementById('signin-password').value;
+
+            try {
+                const response = await fetch("http://localhost:3000/signin", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, password, userType }),
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    handleLoginSuccess(data);
+                } else {
+                    // Show error message
+                    let errorElement = document.querySelector('.error-message');
+                    if (!errorElement) {
+                        errorElement = document.createElement('div');
+                        errorElement.className = 'error-message';
+                        errorElement.style.color = 'red';
+                        errorElement.style.marginTop = '10px';
+                        errorElement.style.padding = '10px';
+                        errorElement.style.borderRadius = '5px';
+                        errorElement.style.backgroundColor = '#ffebee';
+                        document.getElementById('sign-in-form').appendChild(errorElement);
+                    }
+
+                    errorElement.textContent = data.message;
+                    errorElement.style.display = 'block';
+
+                    // Clear password field for security
+                    document.getElementById('signin-password').value = '';
+
+                    // If username not found, suggest signing up
+                    if (data.errorType === 'username_not_found') {
+                        const signUpLink = document.createElement('a');
+                        signUpLink.href = 'loginSignin.html?type=' + userType;
+                        signUpLink.textContent = ' Sign up here';
+                        signUpLink.style.color = 'blue';
+                        signUpLink.style.textDecoration = 'underline';
+                        errorElement.appendChild(signUpLink);
+                    }
+                }
+            } catch (error) {
+                console.error("Error during sign in:", error);
+                alert("An error occurred. Please try again later.");
+            }
+        });
+
+        document.getElementById('sign-up-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const username = document.getElementById('signup-username').value;
+            const password = document.getElementById('signup-password').value;
+            const date = document.getElementById('signup-date').value;
+            const aadhar = document.getElementById('signup-aadhar').value;
+            const phone = document.getElementById('signup-phone').value;
+            
+            try {
+                const response = await fetch("http://localhost:3000/signup", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, password, date, aadhar, phone, userType }),
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    alert("Registration successful! Please login.");
+                    window.location.href = "loginSignin.html?type=" + userType;
+                } else {
+                    alert(data.message || "Registration failed. Please try again.");
+                }
+            } catch (error) {
+                console.error("Error during sign up:", error);
+                alert("An error occurred. Please try again later.");
+            }
+        });
+    </script>
 </body>
 
 </html>

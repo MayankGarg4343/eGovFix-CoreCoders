@@ -6,8 +6,8 @@
 
   /*===== Colors =====*/
   --first-color: #1494fd;
-  --first-color-dark: #2293de;
-  --first-color-darken: #0e59da;
+  --first-color-dark: #1c6ea9;
+  --first-color-darken: #192f54;
   --white-color: #FCF8F8;
   
   /*===== Font and typography =====*/
@@ -74,7 +74,7 @@ img{
   top: 0;
   left: 0;
   z-index: var(--z-fixed);
-  background-color: var(--first-color);
+  background-color: rgb(40, 75, 135);
 }
 
 /*===== NAV =====*/
@@ -105,6 +105,9 @@ img{
   right: 1rem;
   font-size: 1.5rem;
   cursor: pointer;
+}
+.nav__logo{
+  font-size: 1.7rem;
 }
 
 .nav__item{

@@ -1,16 +1,10 @@
 [
   {
-    "username": "nikita",
-    "password": "$2b$10$eG7JYcn2hJqOfD2FbugOyuywC4xn0TyXF5xW3NH9NJ3YabD4WjtmS",
-    "date": "2025-03-06",
-    "aadhar": "345654567890",
-    "phone": "6756453456"
-  },
-  {
-    "username": "mayank",
-    "password": "$2b$10$ILUClBSEp8AbrsfvdGRysOPavYxDT/sH.b3/1ev1ov8z1t2n/GLqS",
-    "date": "2025-03-20",
-    "aadhar": "235467876567",
-    "phone": "4565456789"
+    "username": "NIKITA",
+    "password": "$2b$10$l/EnDrOh/GbYrVFEukKEQ./iAy7i4MehV0MCE0pZmnUUCzQSr7R4m",
+    "date": "2025-04-23",
+    "aadhar": "787678989090",
+    "phone": "7687898789",
+    "userType": "user"
   }
 ]

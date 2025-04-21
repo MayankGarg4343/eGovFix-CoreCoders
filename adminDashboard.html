@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Admin Dashboard - eGovFix</title>
+	<link href='https://unpkg.com/boxicons@2.0.9/css/boxicons.min.css' rel='stylesheet'>
+	<link rel="stylesheet" href="admindashboard.css">
+	<style>
+		/* Animation Classes */
+		@keyframes slideInLeft {
+			from {
+				transform: translateX(-100%);
+				opacity: 0;
+			}
+			to {
+				transform: translateX(0);
+				opacity: 1;
+			}
+		}
+
+		@keyframes slideInRight {
+			from {
+				transform: translateX(100%);
+				opacity: 0;
+			}
+			to {
+				transform: translateX(0);
+				opacity: 1;
+			}
+		}
+
+		@keyframes fadeIn {
+			from {
+				opacity: 0;
+			}
+			to {
+				opacity: 1;
+			}
+		}
+
+		@keyframes scaleIn {
+			from {
+				transform: scale(0.9);
+				opacity: 0;
+			}
+			to {
+				transform: scale(1);
+				opacity: 1;
+			}
+		}
+
+		@keyframes float {
+			0% {
+				transform: translateY(0px);
+			}
+			50% {
+				transform: translateY(-10px);
+			}
+			100% {
+				transform: translateY(0px);
+			}
+		}
+
+		/* Apply Animations */
+		#sidebar {
+			animation: slideInLeft 0.5s ease-out;
+		}
+
+		#content {
+			animation: slideInRight 0.5s ease-out;
+		}
+
+		main h1 {
+			animation: fadeIn 0.8s ease-out;
+		}
+
+		.cards .card {
+			animation: scaleIn 0.5s ease-out;
+			transition: transform 0.3s ease, box-shadow 0.3s ease;
+		}
+
+		.cards .card:hover {
+			transform: translateY(-5px);
+			box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+		}
+
+		.dashboard-sections section {
+			animation: fadeIn 0.8s ease-out;
+			transition: transform 0.3s ease;
+		}
+
+		.dashboard-sections section:hover {
+			transform: translateY(-3px);
+		}
+
+		/* Hover Effects */
+		.side-menu li a {
+			transition: all 0.3s ease;
+		}
+
+		.side-menu li a:hover {
+			transform: translateX(5px);
+		}
+
+		.resources ul li a {
+			transition: all 0.3s ease;
+		}
+
+		.resources ul li a:hover {
+			transform: translateX(5px);
+			color: #3498db;
+		}
+
+		/* Loading Animation */
+		.loading {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background: rgba(255, 255, 255, 0.9);
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			z-index: 1000;
+			animation: fadeIn 0.5s ease-out;
+		}
+
+		.loading-spinner {
+			width: 50px;
+			height: 50px;
+			border: 5px solid #f3f3f3;
+			border-top: 5px solid #3498db;
+			border-radius: 50%;
+			animation: spin 1s linear infinite;
+		}
+
+		@keyframes spin {
+			0% { transform: rotate(0deg); }
+			100% { transform: rotate(360deg); }
+		}
+
+		/* Notification Animation */
+		.notification {
+			position: relative;
+		}
+
+		.notification .num {
+			animation: float 2s ease-in-out infinite;
+		}
+
+		/* Card Number Animation */
+		.card p {
+			transition: transform 0.3s ease;
+		}
+
+		.card:hover p {
+			transform: scale(1.1);
+		}
+	</style>
+</head>
+
+<body>
+	<!-- Loading Screen -->
+	<div class="loading">
+		<div class="loading-spinner"></div>
+	</div>
+
+	<!-- SIDEBAR -->
+	<section id="sidebar">
+		<a href="./landing.html" class="brand">
+			<i class='bx bxs-smile'></i>
+			<span class="text">eGovFix</span>
+		</a>
+		<ul class="side-menu top">
+			<li class="active">
+				<a href="#" data-page="dashboard">
+					<i class='bx bxs-dashboard'></i>
+					<span class="text">Dashboard</span>
+				</a>
+			</li>
+			<li>
+				<a href="#" data-page="documents">
+					<i class='bx bx-file'></i>
+					<span class="text">Documents</span>
+				</a>
+			</li>
+			<li>
+				<a href="#" data-page="resources">
+					<i class='bx bx-link'></i>
+					<span class="text">Resources</span>
+				</a>
+			</li>
+		</ul>
+		<ul class="side-menu">
+			<li>
+				<a href="#" data-page="manageUsers">
+					<i class='bx bx-group'></i>
+					<span class="text">Manage Users</span>
+				</a>
+			</li>
+			<li>
+				<a href="#" data-page="complaints">
+					<i class='bx bx-task'></i>
+					<span class="text">All Complaints</span>
+				</a>
+			</li>
+			<li>
+				<a href="#" data-page="verification">
+					<i class='bx bx-check-shield'></i>
+					<span class="text">Document Verification</span>
+				</a>
+			</li>
+			<li>
+				<a href="#" data-page="analytics">
+					<i class='bx bx-bar-chart'></i>
+					<span class="text">Analytics & Reports</span>
+				</a>
+			</li>
+			<li>
+				<a href="#" class="logout">
+					<i class='bx bxs-log-out-circle'></i>
+					<button class="text logout-btn">Logout</button>
+				</a>
+			</li>
+		</ul>
+	</section>
+	<!-- SIDEBAR -->
+
+	<!-- CONTENT -->
+	<section id="content">
+		<!-- NAVBAR -->
+		<nav>
+			<i class='bx bx-menu'></i>
+			<h2>Dashboard</h2>
+			<div class="right-icons">
+				<a href="#" class="notification">
+					<i class='bx bxs-bell'></i>
+					<span class="num">3</span>
+				</a>
+				<a href="#" class="profile">
+					<img src="img/people.jpg">
+				</a>
+			</div>
+		</nav>
+		<!-- NAVBAR -->
+
+		<!-- MAIN -->
+		<main>
+			<!-- Content will be loaded here dynamically -->
+		</main>
+		<!-- MAIN -->
+	</section>
+	<!-- CONTENT -->
+
+	<script>
+		// Sidebar Toggle
+		const sidebar = document.getElementById('sidebar');
+		const content = document.getElementById('content');
+		const menuBtn = document.querySelector('.bx-menu');
+		const mainContent = document.querySelector('main');
+
+		menuBtn.addEventListener('click', () => {
+			sidebar.classList.toggle('compressed');
+			content.classList.toggle('compressed');
+		});
+
+		// Page Content
+		const pages = {
+			dashboard: `
+				<div class="head-title">
+					<div class="left">
+						<h1>Admin Dashboard</h1>
+						<p>Welcome to the admin control panel</p>
+					</div>
+				</div>
+				<div class="box-info">
+					<div class="card">
+						<h3>Total Users</h3>
+						<p>150</p>
+					</div>
+					<div class="card">
+						<h3>Pending Documents</h3>
+						<p>25</p>
+					</div>
+					<div class="card">
+						<h3>Active Complaints</h3>
+						<p>12</p>
+					</div>
+				</div>
+			`,
+			documents: `
+				<div class="head-title">
+					<div class="left">
+						<h1>Documents Management</h1>
+						<p>Manage and verify user documents</p>
+					</div>
+				</div>
+				<div class="document-section">
+					<div class="upload-section">
+						<h3>Upload New Document</h3>
+						<form id="documentUpload">
+							<input type="file" id="fileInput" required>
+							<button type="submit">Upload</button>
+						</form>
+					</div>
+					<div class="document-list">
+						<h3>Recent Documents</h3>
+						<ul id="recentDocuments"></ul>
+					</div>
+				</div>
+			`,
+			resources: `
+				<div class="head-title">
+					<div class="left">
+						<h1>Resources</h1>
+						<p>Manage system resources and links</p>
+					</div>
+				</div>
+				<div class="resources-section">
+					<div class="resource-list">
+						<h3>Available Resources</h3>
+						<ul>
+							<li><a href="#">User Guide</a></li>
+							<li><a href="#">API Documentation</a></li>
+							<li><a href="#">System Manual</a></li>
+						</ul>
+					</div>
+				</div>
+			`,
+			manageUsers: `
+				<div class="head-title">
+					<div class="left">
+						<h1>User Management</h1>
+						<p>Manage user accounts and permissions</p>
+					</div>
+				</div>
+				<div class="user-management">
+					<div class="user-list">
+						<h3>User List</h3>
+						<table>
+							<thead>
+								<tr>
+									<th>Username</th>
+									<th>Email</th>
+									<th>Role</th>
+									<th>Actions</th>
+								</tr>
+							</thead>
+							<tbody id="userTableBody"></tbody>
+						</table>
+					</div>
+				</div>
+			`,
+			complaints: `
+				<div class="head-title">
+					<div class="left">
+						<h1>Complaints Management</h1>
+						<p>View and manage user complaints</p>
+					</div>
+				</div>
+				<div class="complaints-section">
+					<div class="complaint-list">
+						<h3>Recent Complaints</h3>
+						<ul id="complaintList"></ul>
+					</div>
+				</div>
+			`,
+			verification: `
+				<div class="head-title">
+					<div class="left">
+						<h1>Document Verification</h1>
+						<p>Verify and approve user documents</p>
+					</div>
+				</div>
+				<div class="verification-section">
+					<div class="pending-documents">
+						<h3>Pending Verification</h3>
+						<ul id="pendingDocuments"></ul>
+					</div>
+				</div>
+			`,
+			analytics: `
+				<div class="head-title">
+					<div class="left">
+						<h1>Analytics & Reports</h1>
+						<p>View system analytics and generate reports</p>
+					</div>
+				</div>
+				<div class="analytics-section">
+					<div class="charts">
+						<h3>System Statistics</h3>
+						<div class="chart-container">
+							<!-- Charts will be added here -->
+						</div>
+					</div>
+				</div>
+			`
+		};
+
+		// Load Content Function
+		function loadContent(page) {
+			if (pages[page]) {
+				mainContent.innerHTML = pages[page];
+			}
+		}
+
+		// Active Menu Item and Content Loading
+		const menuItems = document.querySelectorAll('.side-menu li a');
+		menuItems.forEach(item => {
+			item.addEventListener('click', (e) => {
+				e.preventDefault();
+				menuItems.forEach(i => i.parentElement.classList.remove('active'));
+				item.parentElement.classList.add('active');
+				
+				const page = item.getAttribute('data-page');
+				if (page) {
+					loadContent(page);
+				}
+			});
+		});
+
+		// Remove loading screen
+		window.addEventListener('load', () => {
+			document.querySelector('.loading').style.display = 'none';
+			// Load default dashboard content
+			loadContent('dashboard');
+		});
+
+		// Check if user is logged in
+		window.addEventListener('load', () => {
+			const userType = sessionStorage.getItem('userType');
+			if (!userType || userType !== 'admin') {
+				window.location.href = 'adminsignin.html';
+			}
+		});
+
+		// Handle logout
+		document.querySelector('.logout-btn').addEventListener('click', (e) => {
+			e.preventDefault();
+			if (confirm('Are you sure you want to logout?')) {
+				sessionStorage.removeItem('userType');
+				window.location.href = 'register.html';
+			}
+		});
+	</script>
+	<script src="admindashboard.js"></script>
+</body>
+
+</html>

@@ -123,7 +123,23 @@ function loadContent(page) {
   }
 }
 
-
-
 // Load the default page when the page loads
 loadContent("dashboard");
+
+// Handle Logout
+const logoutBtn = document.querySelector('.logout-btn');
+logoutBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (confirm('Are you sure you want to logout?')) {
+        sessionStorage.removeItem('userType');
+        window.location.href = 'register.html';
+    }
+});
+
+// Check if user is logged in
+window.addEventListener('load', () => {
+    const userType = sessionStorage.getItem('userType');
+    if (!userType || userType !== 'user') {
+        window.location.href = 'loginSignin.html';
+    }
+});

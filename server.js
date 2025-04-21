@@ -15,15 +15,20 @@ const uploadsDir = path.join(__dirname, "uploads");
 const saltRounds = 10;
 
 // Enable CORS with credentials
-
-app.use(cors());
+app.use(cors({
+    origin: '*', // Allow all origins during development
+    credentials: true
+}));
 app.use(bodyParser.json());
 app.use(express.static("public"));
 app.use(session({
     secret: "supersecretkey",
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false }
+    cookie: { 
+        secure: false,
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
 }));
 
 // ensure the file exists.
@@ -39,13 +44,12 @@ if (!fs.existsSync(uploadsDir)) {
 // Load users data
 const loadUsers = () => {
   if (!fs.existsSync(usersFile)) {
-      fs.writeFileSync(usersFile, JSON.stringify([], null, 2)); // Create an empty file if not exists
+      fs.writeFileSync(usersFile, JSON.stringify([], null, 2));
       return [];
   }
   const data = fs.readFileSync(usersFile, "utf8");
   return JSON.parse(data);
 };
-
 
 // Save users data
 const saveUsers = (users) => {
@@ -72,64 +76,152 @@ const saveJoinUsData = (data) => {
   fs.writeFileSync(joinUsFile, JSON.stringify(data, null, 2));
 };
 
-// ✅ **Signup Route**
+// **Signup Route**
 app.post("/signup", async (req, res) => {
-  console.log("Received signup request:", req.body);
-  const { username, password, date, aadhar, phone } = req.body;
-  
-  let users = loadUsers();
-  console.log("Current users:", users);
+    try {
+        console.log("Received signup request:", req.body);
+        const { username, password, date, aadhar, phone, userType } = req.body;
+        
+        if (!username || !password || !date || !aadhar || !phone) {
+            console.log("Missing required fields");
+            return res.status(400).json({ message: "All fields are required" });
+        }
 
-  if (users.find(user => user.username === username)) {
-      console.log("User already exists!");
-      return res.status(400).json({ message: "User already exists" });
-  }
+        let users = loadUsers();
+        console.log("Current users:", users);
 
-  const hashedPassword = await bcrypt.hash(password, saltRounds);
-  users.push({ username, password: hashedPassword, date, aadhar, phone });
+        if (users.find(user => user.username === username)) {
+            console.log("User already exists!");
+            return res.status(400).json({ message: "User already exists" });
+        }
 
-  console.log("Updated users:", users);
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+        const newUser = { 
+            username, 
+            password: hashedPassword, 
+            date, 
+            aadhar, 
+            phone,
+            userType: userType || 'user'
+        };
+        users.push(newUser);
 
-  fs.writeFile(usersFile, JSON.stringify(users, null, 2), (err) => {
-      if (err) {
-          console.error("Error writing to file:", err);
-          return res.status(500).json({ message: "Error saving user data" });
-      }
-      console.log("User data saved successfully!");
-      res.status(201).json({ message: "User registered successfully" });
-  });
+        console.log("Attempting to save user:", newUser);
+        
+        fs.writeFile(usersFile, JSON.stringify(users, null, 2), (err) => {
+            if (err) {
+                console.error("Error writing to file:", err);
+                return res.status(500).json({ message: "Error saving user data" });
+            }
+            console.log("User data saved successfully!");
+            res.status(201).json({ message: "User registered successfully" });
+        });
+    } catch (error) {
+        console.error("Error in signup route:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
 });
 
-
-// ✅ **Signin Route**
+// **Signin Route**
 app.post("/signin", async (req, res) => {
-  const { username, password } = req.body;
-  let users = loadUsers();
-  
-  const user = users.find(user => user.username === username);
-  if (!user) {
-      return res.status(401).json({ message: "Invalid username or password" });
-  }
-  
-  const passwordMatch = await bcrypt.compare(password, user.password);
-  if (!passwordMatch) {
-      return res.status(401).json({ message: "Invalid username or password" });
-  }
-  
-  req.session.user = user;
-  res.status(200).json({ message: "Login successful", redirect: "/landing.html" });
+    try {
+        console.log("Received signin request:", req.body);
+        const { username, password, userType } = req.body;
+        
+        if (!username || !password) {
+            console.log("Missing username or password");
+            return res.status(400).json({ 
+                success: false,
+                message: "Username and password are required",
+                errorType: "missing_fields"
+            });
+        }
+
+        let users = loadUsers();
+        console.log("Current users in database:", users);
+        
+        const user = users.find(user => user.username === username);
+        if (!user) {
+            console.log("User not found:", username);
+            return res.status(401).json({ 
+                success: false,
+                message: "Username not found. Please check your username or sign up if you don't have an account.",
+                errorType: "username_not_found"
+            });
+        }
+        
+        console.log("Found user:", user.username);
+        const passwordMatch = await bcrypt.compare(password, user.password);
+        if (!passwordMatch) {
+            console.log("Password mismatch for user:", username);
+            return res.status(401).json({ 
+                success: false,
+                message: "Incorrect password. Please try again.",
+                errorType: "incorrect_password"
+            });
+        }
+
+        // Check if user type matches
+        if (userType && user.userType !== userType) {
+            console.log("User type mismatch:", user.userType, "expected:", userType);
+            return res.status(403).json({ 
+                success: false,
+                message: "Invalid user type for this account. Please sign in with the correct account type.",
+                errorType: "invalid_user_type"
+            });
+        }
+        
+        // Set session data
+        req.session.user = {
+            username: user.username,
+            userType: user.userType
+        };
+
+        // Determine redirect URL based on user type
+        let redirectUrl = '/landing.html';
+        switch(user.userType) {
+            case 'admin':
+                redirectUrl = '/adminDashboard.html';
+                break;
+            case 'guest':
+                redirectUrl = '/guestDashboard.html';
+                break;
+            case 'user':
+                redirectUrl = '/dashboard.html';
+                break;
+        }
+
+        console.log("Login successful for user:", username, "redirecting to:", redirectUrl);
+        res.status(200).json({ 
+            success: true,
+            message: "Login successful", 
+            redirect: redirectUrl,
+            userType: user.userType
+        });
+    } catch (error) {
+        console.error("Error in signin route:", error);
+        res.status(500).json({ 
+            success: false,
+            message: "An unexpected error occurred. Please try again later.",
+            errorType: "server_error"
+        });
+    }
 });
 
-// ✅ **Check Authentication Status**
+// **Check Authentication Status**
 app.get("/check-auth", (req, res) => {
-  if (req.session.user) {
-    res.json({ authenticated: true, username: req.session.user.username });
-  } else {
-    res.json({ authenticated: false });
-  }
+    if (req.session.user) {
+        res.json({ 
+            authenticated: true, 
+            username: req.session.user.username,
+            userType: req.session.user.userType
+        });
+    } else {
+        res.json({ authenticated: false });
+    }
 });
 
-// ✅ **Logout Route**
+// **Logout Route**
 app.post("/logout", (req, res) => {
   req.session.destroy(err => {
       if (err) {
@@ -139,12 +231,17 @@ app.post("/logout", (req, res) => {
   });
 });
 
-// ✅ **Middleware to Check Authentication**
-const isAuthenticated = (req, res, next) => {
-  if (!req.session.user) {
-    return res.status(401).json({ message: "Unauthorized. Please log in first." });
-  }
-  next();
+// **Middleware to Check User Type**
+const checkUserType = (allowedTypes) => {
+    return (req, res, next) => {
+        if (!req.session.user) {
+            return res.status(401).json({ message: "Unauthorized. Please log in first." });
+        }
+        if (!allowedTypes.includes(req.session.user.userType)) {
+            return res.status(403).json({ message: "Access denied. Invalid user type." });
+        }
+        next();
+    };
 };
 
 // ✅ **Document Upload (Separate storage for each user)**
@@ -165,7 +262,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-app.post("/upload", isAuthenticated, upload.single("document"), (req, res) => {
+app.post("/upload", checkUserType(['admin', 'user']), upload.single("document"), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: "No file uploaded" });
   }
@@ -174,7 +271,7 @@ app.post("/upload", isAuthenticated, upload.single("document"), (req, res) => {
 });
 
 // ✅ **Get Uploaded Documents**
-app.get("/documents", isAuthenticated, (req, res) => {
+app.get("/documents", checkUserType(['admin', 'user']), (req, res) => {
   const username = req.session.user.username;
   const userDir = path.join(uploadsDir, username);
 
@@ -191,7 +288,7 @@ app.get("/documents", isAuthenticated, (req, res) => {
 });
 
 // ✅ **Download Document**
-app.get("/download/:filename", isAuthenticated, (req, res) => {
+app.get("/download/:filename", checkUserType(['admin', 'user']), (req, res) => {
   const username = req.session.user.username;
   const filePath = path.join(uploadsDir, username, req.params.filename);
 
@@ -203,7 +300,7 @@ app.get("/download/:filename", isAuthenticated, (req, res) => {
 });
 
 // ✅ **Delete Document**
-app.delete("/delete/:filename", isAuthenticated, (req, res) => {
+app.delete("/delete/:filename", checkUserType(['admin', 'user']), (req, res) => {
   const username = req.session.user.username;
   const filePath = path.join(uploadsDir, username, req.params.filename);
 
@@ -223,7 +320,7 @@ app.post("/become_partner", (req, res) => {
   }
 
   const joinUsData = loadJoinUsData();
-  
+
   joinUsData.push({ name, email, phone, company, message, submittedAt: new Date().toISOString() });
 
   saveJoinUsData(joinUsData);
