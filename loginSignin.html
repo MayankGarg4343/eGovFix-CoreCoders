@@ -99,14 +99,14 @@
         }
 
         // Add event listeners to forms
+        if (userType === 'guest') {
+            handleLoginSuccess({ userType: 'guest', redirect: 'guestDashboard.html' });
+            return;
+        }
         document.getElementById('sign-in-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             // For guest users, directly redirect without requiring credentials
-            if (userType === 'guest') {
-                handleLoginSuccess({ userType: 'guest', redirect: 'guestDashboard.html' });
-                return;
-            }
 
             const username = document.getElementById('signin-username').value;
             const password = document.getElementById('signin-password').value;

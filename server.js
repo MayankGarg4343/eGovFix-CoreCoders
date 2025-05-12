@@ -6,6 +6,7 @@ const cors = require("cors");
 const bcrypt = require("bcrypt");
 const session = require("express-session");
 const multer = require("multer");
+const mongoose = require('mongoose');
 
 const app = express();
 const PORT = 3000;
@@ -13,6 +14,14 @@ const usersFile = path.join(__dirname, "users.json");
 const joinUsFile = path.join(__dirname, "joinus.json");
 const uploadsDir = path.join(__dirname, "uploads");
 const saltRounds = 10;
+const dbURI = 'mongodb://localhost:27017/egovfix'; // You can change 'egovfix' to your desired database name
+
+mongoose.connect(dbURI)
+  .then(() => console.log('MongoDB connected'))
+  .catch(err => console.error(err));
+
+const User = require('./models/User'); // Adjust the path if necessary
+
 
 // Enable CORS with credentials
 app.use(cors({
@@ -78,135 +87,72 @@ const saveJoinUsData = (data) => {
 
 // **Signup Route**
 app.post("/signup", async (req, res) => {
-    try {
-        console.log("Received signup request:", req.body);
-        const { username, password, date, aadhar, phone, userType } = req.body;
-        
-        if (!username || !password || !date || !aadhar || !phone) {
-            console.log("Missing required fields");
-            return res.status(400).json({ message: "All fields are required" });
-        }
+  try {
+      const { username, password, date, aadhar, phone, userType } = req.body;
 
-        let users = loadUsers();
-        console.log("Current users:", users);
+      // Check if the user already exists
+      const existingUser = await User.findOne({ username });
+      if (existingUser) {
+          return res.status(400).json({ message: "User already exists" });
+      }
 
-        if (users.find(user => user.username === username)) {
-            console.log("User already exists!");
-            return res.status(400).json({ message: "User already exists" });
-        }
+      // Hash the password
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-        const hashedPassword = await bcrypt.hash(password, saltRounds);
-        const newUser = { 
-            username, 
-            password: hashedPassword, 
-            date, 
-            aadhar, 
-            phone,
-            userType: userType || 'user'
-        };
-        users.push(newUser);
+      // Create a new user instance
+      const newUser = new User({
+          username,
+          password: hashedPassword,
+          date,
+          aadhar,
+          phone,
+          userType: userType || 'user'
+      });
 
-        console.log("Attempting to save user:", newUser);
-        
-        fs.writeFile(usersFile, JSON.stringify(users, null, 2), (err) => {
-            if (err) {
-                console.error("Error writing to file:", err);
-                return res.status(500).json({ message: "Error saving user data" });
-            }
-            console.log("User data saved successfully!");
-            res.status(201).json({ message: "User registered successfully" });
-        });
-    } catch (error) {
-        console.error("Error in signup route:", error);
-        res.status(500).json({ message: "Internal server error" });
-    }
+      // Save the user to the database
+      await newUser.save();
+
+      console.log("User registered successfully:", newUser);
+      res.status(201).json({ message: "User registered successfully" });
+
+  } catch (error) {
+      console.error("Error in signup route:", error);
+      res.status(500).json({ message: "Internal server error" });
+  }
 });
+
 
 // **Signin Route**
 app.post("/signin", async (req, res) => {
-    try {
-        console.log("Received signin request:", req.body);
-        const { username, password, userType } = req.body;
-        
-        if (!username || !password) {
-            console.log("Missing username or password");
-            return res.status(400).json({ 
-                success: false,
-                message: "Username and password are required",
-                errorType: "missing_fields"
-            });
-        }
+  try {
+      const { username, password } = req.body;
 
-        let users = loadUsers();
-        console.log("Current users in database:", users);
-        
-        const user = users.find(user => user.username === username);
-        if (!user) {
-            console.log("User not found:", username);
-            return res.status(401).json({ 
-                success: false,
-                message: "Username not found. Please check your username or sign up if you don't have an account.",
-                errorType: "username_not_found"
-            });
-        }
-        
-        console.log("Found user:", user.username);
-        const passwordMatch = await bcrypt.compare(password, user.password);
-        if (!passwordMatch) {
-            console.log("Password mismatch for user:", username);
-            return res.status(401).json({ 
-                success: false,
-                message: "Incorrect password. Please try again.",
-                errorType: "incorrect_password"
-            });
-        }
+      // Find the user in the database
+      const user = await User.findOne({ username });
 
-        // Check if user type matches
-        if (userType && user.userType !== userType) {
-            console.log("User type mismatch:", user.userType, "expected:", userType);
-            return res.status(403).json({ 
-                success: false,
-                message: "Invalid user type for this account. Please sign in with the correct account type.",
-                errorType: "invalid_user_type"
-            });
-        }
-        
-        // Set session data
-        req.session.user = {
-            username: user.username,
-            userType: user.userType
-        };
+      // If user not found
+      if (!user) {
+          return res.status(401).json({ message: "Invalid username or password" });
+      }
 
-        // Determine redirect URL based on user type
-        let redirectUrl = '/landing.html';
-        switch(user.userType) {
-            case 'admin':
-                redirectUrl = '/adminDashboard.html';
-                break;
-            case 'guest':
-                redirectUrl = '/guestDashboard.html';
-                break;
-            case 'user':
-                redirectUrl = '/dashboard.html';
-                break;
-        }
+      // Compare the provided password with the hashed password in the database
+      const isPasswordValid = await bcrypt.compare(password, user.password);
 
-        console.log("Login successful for user:", username, "redirecting to:", redirectUrl);
-        res.status(200).json({ 
-            success: true,
-            message: "Login successful", 
-            redirect: redirectUrl,
-            userType: user.userType
-        });
-    } catch (error) {
-        console.error("Error in signin route:", error);
-        res.status(500).json({ 
-            success: false,
-            message: "An unexpected error occurred. Please try again later.",
-            errorType: "server_error"
-        });
-    }
+      // If password is not valid
+      if (!isPasswordValid) {
+          return res.status(401).json({ message: "Invalid username or password" });
+      }
+
+      // If authentication is successful
+      console.log("User signed in successfully:", user);
+      res.status(200).json({ message: "Sign-in successful", user });
+
+  } catch (error) {
+      console.error("Error in signin route:", error);
+      res.status(500).json({ message: "Internal server error" });
+  }
 });
+
 
 // **Check Authentication Status**
 app.get("/check-auth", (req, res) => {
