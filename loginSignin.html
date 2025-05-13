@@ -82,110 +82,119 @@
         </div>
     </div>
 
-    <script src="app.js"></script>
+     <script src="app.js"></script>
     <script>
-        // Get user type from URL parameter
-        const urlParams = new URLSearchParams(window.location.search);
-        const userType = urlParams.get('type');
+       // Get user type from URL parameter
+const urlParams = new URLSearchParams(window.location.search);
+const userType = urlParams.get('type');
 
-        // Function to handle successful login
-        function handleLoginSuccess(data) {
-            // Store user type in session storage
-            sessionStorage.setItem('userType', data.userType);
-            sessionStorage.setItem('username', data.username);
-            
-            // Redirect based on user type
-            window.location.href = data.redirect;
-        }
+// Function to handle successful login
+function handleLoginSuccess(data) {
+    // Debugging: Log the redirect URL
+    console.log("Redirecting to:", data.redirect);
 
-        // Add event listeners to forms
-        if (userType === 'guest') {
-            handleLoginSuccess({ userType: 'guest', redirect: 'guestDashboard.html' });
-            return;
-        }
-        document.getElementById('sign-in-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            // For guest users, directly redirect without requiring credentials
+    // Store user type and username in session storage
+    sessionStorage.setItem('userType', data.userType);
+    sessionStorage.setItem('username', data.username);
 
-            const username = document.getElementById('signin-username').value;
-            const password = document.getElementById('signin-password').value;
+    // Redirect the user to the desired page
+    window.location.href = data.redirect;
+}
 
-            try {
-                const response = await fetch("http://localhost:3000/signin", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ username, password, userType }),
-                });
+// Add event listener to the sign-in form
+document.getElementById('sign-in-form').addEventListener('submit', async function (e) {
+    e.preventDefault(); // Prevent form from reloading the page
 
-                const data = await response.json();
-                
-                if (response.ok && data.success) {
-                    handleLoginSuccess(data);
-                } else {
-                    // Show error message
-                    let errorElement = document.querySelector('.error-message');
-                    if (!errorElement) {
-                        errorElement = document.createElement('div');
-                        errorElement.className = 'error-message';
-                        errorElement.style.color = 'red';
-                        errorElement.style.marginTop = '10px';
-                        errorElement.style.padding = '10px';
-                        errorElement.style.borderRadius = '5px';
-                        errorElement.style.backgroundColor = '#ffebee';
-                        document.getElementById('sign-in-form').appendChild(errorElement);
-                    }
+    const usernameInput = document.getElementById('signin-username');
+    const passwordInput = document.getElementById('signin-password');
+    const errorElement = document.getElementById('signin-error-message'); // Assuming you have an element with this ID
 
-                    errorElement.textContent = data.message;
-                    errorElement.style.display = 'block';
+    const username = usernameInput.value;
+    const password = passwordInput.value;
 
-                    // Clear password field for security
-                    document.getElementById('signin-password').value = '';
+    if (errorElement) {
+        errorElement.textContent = '';
+        errorElement.style.display = 'none';
+    }
 
-                    // If username not found, suggest signing up
-                    if (data.errorType === 'username_not_found') {
-                        const signUpLink = document.createElement('a');
-                        signUpLink.href = 'loginSignin.html?type=' + userType;
-                        signUpLink.textContent = ' Sign up here';
-                        signUpLink.style.color = 'blue';
-                        signUpLink.style.textDecoration = 'underline';
-                        errorElement.appendChild(signUpLink);
-                    }
-                }
-            } catch (error) {
-                console.error("Error during sign in:", error);
-                alert("An error occurred. Please try again later.");
-            }
+    try {
+        const response = await fetch("http://localhost:3000/signin", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password }),
         });
 
-        document.getElementById('sign-up-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const username = document.getElementById('signup-username').value;
-            const password = document.getElementById('signup-password').value;
-            const date = document.getElementById('signup-date').value;
-            const aadhar = document.getElementById('signup-aadhar').value;
-            const phone = document.getElementById('signup-phone').value;
-            
-            try {
-                const response = await fetch("http://localhost:3000/signup", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ username, password, date, aadhar, phone, userType }),
-                });
+        const data = await response.json();
 
-                const data = await response.json();
-                
-                if (response.ok) {
-                    alert("Registration successful! Please login.");
-                    window.location.href = "loginSignin.html?type=" + userType;
-                } else {
-                    alert(data.message || "Registration failed. Please try again.");
-                }
-            } catch (error) {
-                console.error("Error during sign up:", error);
-                alert("An error occurred. Please try again later.");
+        if (response.ok && data.success) {
+            // Handle successful login
+            handleLoginSuccess(data);
+        } else {
+            if (errorElement) {
+                errorElement.textContent = data.message || 'Sign-in failed. Please try again.';
+                errorElement.style.display = 'block';
+                errorElement.style.color = 'red';
+                errorElement.style.marginTop = '10px';
+                errorElement.style.padding = '10px';
+                errorElement.style.borderRadius = '5px';
+                errorElement.style.backgroundColor = '#ffebee';
+            } else {
+                alert(data.message || 'Sign-in failed. Please try again.');
             }
+            passwordInput.value = ''; // Clear password field
+        }
+    } catch (error) {
+        console.error("Error during sign in:", error);
+        if (errorElement) {
+            errorElement.textContent = 'An error occurred. Please try again later.';
+            errorElement.style.display = 'block';
+            errorElement.style.color = 'red';
+            errorElement.style.marginTop = '10px';
+            errorElement.style.padding = '10px';
+            errorElement.style.borderRadius = '5px';
+            errorElement.style.backgroundColor = '#ffebee';
+        } else {
+            alert("An error occurred. Please try again later.");
+        }
+        passwordInput.value = ''; // Clear password field
+    }
+});
+
+document.getElementById('sign-up-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const usernameInput = document.getElementById('signup-username');
+    const passwordInput = document.getElementById('signup-password');
+    const dateInput = document.getElementById('signup-date');
+    const aadharInput = document.getElementById('signup-aadhar');
+    const phoneInput = document.getElementById('signup-phone');
+
+    const username = usernameInput.value;
+    const password = passwordInput.value;
+    const date = dateInput.value;
+    const aadhar = aadharInput.value;
+    const phone = phoneInput.value;
+
+    try {
+        const response = await fetch("http://localhost:3000/signup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password, date, aadhar, phone, userType }),
         });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert("Registration successful! Please login.");
+            window.location.href = "loginSignin.html?type=" + userType;
+        } else {
+            alert(data.message || "Registration failed. Please try again.");
+        }
+    } catch (error) {
+        console.error("Error during sign up:", error);
+        alert("An error occurred. Please try again later.");
+    }
+});
+
     </script>
 </body>
 

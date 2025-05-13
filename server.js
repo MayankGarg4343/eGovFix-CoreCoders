@@ -122,7 +122,7 @@ app.post("/signup", async (req, res) => {
 });
 
 
-// **Signin Route**
+// Sign-in Route
 app.post("/signin", async (req, res) => {
   try {
       const { username, password } = req.body;
@@ -132,7 +132,7 @@ app.post("/signin", async (req, res) => {
 
       // If user not found
       if (!user) {
-          return res.status(401).json({ message: "Invalid username or password" });
+          return res.status(401).json({ success: false, message: "Invalid username or password" });
       }
 
       // Compare the provided password with the hashed password in the database
@@ -140,31 +140,47 @@ app.post("/signin", async (req, res) => {
 
       // If password is not valid
       if (!isPasswordValid) {
-          return res.status(401).json({ message: "Invalid username or password" });
+          return res.status(401).json({ success: false, message: "Invalid username or password" });
       }
 
       // If authentication is successful
       console.log("User signed in successfully:", user);
-      res.status(200).json({ message: "Sign-in successful", user });
+
+      // **Line to add/check:** Set session information
+      req.session.user = {
+          username: user.username,
+          userType: user.userType,
+          // You can add other relevant user data here
+      };
+
+      // Determine redirect URL based on user type
+      const redirectUrl = user.userType === 'admin' ? '/adminDashboard.html' : (user.userType === 'guest' ? '/guestDashboard.html' : '/dashboard.html'); // Adjust paths as needed
+
+      // Send successful response with redirect URL
+      res.status(200).json({ success: true, message: "Sign-in successful", user: { username: user.username, userType: user.userType }, redirect: redirectUrl });
 
   } catch (error) {
       console.error("Error in signin route:", error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
 
 
+
+
 // **Check Authentication Status**
 app.get("/check-auth", (req, res) => {
-    if (req.session.user) {
-        res.json({ 
-            authenticated: true, 
-            username: req.session.user.username,
-            userType: req.session.user.userType
-        });
-    } else {
-        res.json({ authenticated: false });
-    }
+  if (req.session.user) {
+      // User is authenticated
+      res.json({
+          authenticated: true,
+          username: req.session.user.username,
+          userType: req.session.user.userType
+      });
+  } else {
+      // User is not authenticated
+      res.json({ authenticated: false });
+  }
 });
 
 // **Logout Route**

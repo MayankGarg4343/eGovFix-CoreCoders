@@ -12,6 +12,7 @@ sign_in_btn.addEventListener("click", () => {
   container.classList.remove("sign-up-mode");
 });
 
+
 // Handle Sign Up
 signUpForm.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -46,78 +47,79 @@ signUpForm.addEventListener("submit", async (event) => {
 });
 
 // Handle Sign In
+// Assuming you have a sign-in form element and an event listener
 signInForm.addEventListener("submit", async (event) => {
+  // Prevent the default form submission
   event.preventDefault();
 
-  const username = document.querySelector("#signin-username").value;
-  const password = document.querySelector("#signin-password").value;
-  const userType = new URLSearchParams(window.location.search).get('type') || 'user';
+  // Get the username and password input elements
+  const usernameInput = document.getElementById("signin-username"); // Assuming the ID of your username input is "signin-username"
+  const passwordInput = document.getElementById("signin-password"); // Assuming the ID of your password input is "signin-password"
+
+  // Get the values from the input fields
+  const username = usernameInput.value;
+  const password = passwordInput.value;
+
+  // Get the error message element (assuming you have one)
+  const errorElement = document.getElementById("signin-error-message"); // Assuming you have an element with this ID to display errors
 
   // Clear any previous error messages
-  const errorMessage = document.querySelector('.error-message');
-  if (errorMessage) {
-    errorMessage.style.display = 'none';
+  if (errorElement) {
+      errorElement.textContent = "";
+      errorElement.style.display = "none"; // Hide the error element initially
   }
 
   try {
-    console.log("Attempting to sign in user:", username);
-    const response = await fetch("http://localhost:3000/signin", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password, userType }),
-    });
+      // Send a POST request to the server's /signin route
+      const response = await fetch("http://localhost:3000/signin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password }),
+      });
 
-    const data = await response.json();
-    console.log("Server response:", data);
-    
-    if (response.ok && data.success) {
-      // Store user type in session storage
-      sessionStorage.setItem('userType', data.userType);
-      sessionStorage.setItem('username', username);
-      
-      alert("Login successful!");
-      window.location.href = data.redirect;
-    } else {
-      // Show specific error message based on error type
-      let errorElement = document.querySelector('.error-message');
-      if (!errorElement) {
-        errorElement = document.createElement('div');
-        errorElement.className = 'error-message';
-        signInForm.appendChild(errorElement);
+      const data = await response.json();
+
+      if (response.ok && data.success) { // Check for both response.ok and data.success
+          // Sign-in was successful
+          console.log("Sign-in successful:", data);
+
+          // Redirect the user to the URL provided by the server
+          if (data.redirect) {
+              window.location.href = data.redirect; // Use the redirect URL from the server response
+          } else {
+              // Fallback redirect if no redirect URL is provided
+              window.location.href = "landing.html"; // Or a default landing page
+          }
+      } else {
+          // Sign-in failed
+          console.error("Sign-in failed:", data.message);
+
+          // Display the error message to the user
+          if (errorElement) {
+              errorElement.textContent = data.message || "Sign-in failed. Please try again.";
+              errorElement.style.display = "block"; // Show the error element
+          } else {
+              alert(data.message || "Sign-in failed. Please try again.");
+          }
+
+          // Clear the password field for security
+          passwordInput.value = "";
+
       }
 
-      errorElement.textContent = data.message;
-      errorElement.style.display = 'block';
-      errorElement.style.color = 'red';
-      errorElement.style.marginTop = '10px';
-      errorElement.style.padding = '10px';
-      errorElement.style.borderRadius = '5px';
-      errorElement.style.backgroundColor = '#ffebee';
-
-      // Clear password field for security
-      document.querySelector("#signin-password").value = '';
-
-      // If username not found, suggest signing up
-      if (data.errorType === 'username_not_found') {
-        const signUpLink = document.createElement('a');
-        signUpLink.href = 'loginSignin.html?type=' + userType;
-        signUpLink.textContent = ' Sign up here';
-        signUpLink.style.color = 'blue';
-        signUpLink.style.textDecoration = 'underline';
-        errorElement.appendChild(signUpLink);
-      }
-    }
   } catch (error) {
-    console.error("Error during sign in:", error);
-    const errorElement = document.querySelector('.error-message') || document.createElement('div');
-    errorElement.className = 'error-message';
-    errorElement.textContent = "An error occurred. Please try again later.";
-    errorElement.style.display = 'block';
-    errorElement.style.color = 'red';
-    errorElement.style.marginTop = '10px';
-    errorElement.style.padding = '10px';
-    errorElement.style.borderRadius = '5px';
-    errorElement.style.backgroundColor = '#ffebee';
-    signInForm.appendChild(errorElement);
+      console.error("Error during sign-in:", error);
+
+      // Display a generic error message for network or other errors
+      if (errorElement) {
+          errorElement.textContent = "An error occurred. Please try again later.";
+          errorElement.style.display = "block"; // Show the error element
+      } else {
+          alert("An error occurred. Please try again later.");
+      }
+
+      // Clear the password field for security
+      passwordInput.value = "";
   }
 });
+
